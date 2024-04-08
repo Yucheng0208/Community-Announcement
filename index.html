@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>公告生成與下載</title>
+    <script src="https://cdn.jsdelivr.net/npm/docx@7.1.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        input[type=text], textarea, input[type=button] {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type=button] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        input[type=button]:hover {
+            background-color: #45a049;
+        }
+
+        #announcement {
+            display: none;
+            background-color: #f2f2f2;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .announcement-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .announcement-content, .announcement-community, .announcement-date {
+            text-align: justify;
+            font-size: 14px; /* 調整為需要的字體大小 */
+        }
+
+        .announcement-date, .announcement-community {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+<h2>公告內容填寫</h2>
+<form id="announcementForm">
+    <label for="community">社區名稱:</label><br>
+    <input type="text" id="community" name="community"><br>
+    <label for="title">標題:</label><br>
+    <input type="text" id="title" name="title"><br>
+    <label for="content">內容:</label><br>
+    <textarea id="content" name="content" rows="4" cols="50"></textarea><br>
+    <input type="button" value="公告預覽" onclick="generateAnnouncement()">
+    <input type="button" value="公告下載（docx）" onclick="downloadWord()">    
+</form>
+<h2>公告預覽</h2>
+<div id="announcement">
+    <div class="announcement-title" id="announcementTitle"></div>
+    <p class="announcement-date" id="announcementDate"></p>
+    <p class="announcement-content" id="announcementContent"></p>
+    <p class="announcement-community" id="announcementCommunity"></p>
+</div>
+
+<script>
+function generateAnnouncement() {
+    var community = document.getElementById("community").value;
+    var title = document.getElementById("title").value;
+    var content = document.getElementById("content").value;
+    var currentDate = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }).replaceAll('/', '-');
+
+    if(community.trim() !== "" && title.trim() !== "" && content.trim() !== "") {
+        document.getElementById("announcementTitle").innerText = title + "公告";
+        document.getElementById("announcementDate").innerText = "公告日期：" + currentDate;
+        document.getElementById("announcementContent").innerText = content;
+        document.getElementById("announcementCommunity").innerText = community;
+        document.getElementById("announcement").style.display = "block";
+    } else {
+        alert("請填寫所有欄位");
+    }
+}
+
+function downloadWord() {
+    var community = document.getElementById("community").value;
+    var title = document.getElementById("title").value;
+    var content = document.getElementById("content").value;
+    var currentDate = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }).replaceAll('/', '-');
+
+    if(community.trim() === "" || title.trim() === "" || content.trim() === "") {
+        alert("請先預覽");
+        return;
+    }
+
+    var doc = new docx.Document({
+        styles: {
+            paragraphStyles: [
+                {
+                    id: "MyStyle",
+                    name: "My Style",
+                    basedOn: "Normal",
+                    next: "Normal",
+                    run: {
+                        font: "Microsoft YaHei",
+                        size: 24, 
+                    },
+                    paragraph: {
+                        spacing: { after: 120 }, 
+                    },
+                },
+            ],
+        },
+        sections: [{
+            properties: {},
+            children: [
+                new docx.Paragraph({
+                    text: title + "公告",
+                    heading: docx.HeadingLevel.TITLE,
+                    alignment: docx.AlignmentType.CENTER,
+                }),
+                new docx.Paragraph({
+                    text: "公告日期：" + currentDate,
+                    alignment: docx.AlignmentType.RIGHT,
+                }),                    
+                new docx.Paragraph({
+                    text: content,
+                    alignment: docx.AlignmentType.BOTH,
+                }),
+                new docx.Paragraph({
+                    text: community,
+                    alignment: docx.AlignmentType.RIGHT,
+                }),
+            ]
+        }]
+    });
+
+    docx.Packer.toBlob(doc).then(blob => {
+        saveAs(blob, `${currentDate}_${title}公告.docx`);
+    });
+}
+</script>
+
+</body>
+</html>
